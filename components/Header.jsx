@@ -6,11 +6,13 @@ import { Search, MapPin, ShoppingCart, Menu, X, User, Heart } from 'lucide-react
 import Link from 'next/link';
 import { useSelector } from 'react-redux';
 import { selectCartCount } from '@/store/slices/cartSlice';
+import { isAuthenticated } from '@/lib/api';
 
 const Header = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [authenticated, setAuthenticated] = useState(false);
   const cartCount = useSelector(selectCartCount);
 
   useEffect(() => {
@@ -19,6 +21,27 @@ const Header = () => {
     };
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  useEffect(() => {
+    // Check authentication status
+    setAuthenticated(isAuthenticated());
+    
+    // Listen for storage changes (login/logout from other tabs)
+    const handleStorageChange = () => {
+      setAuthenticated(isAuthenticated());
+    };
+    window.addEventListener('storage', handleStorageChange);
+    
+    // Check auth status periodically (for same-tab login/logout)
+    const interval = setInterval(() => {
+      setAuthenticated(isAuthenticated());
+    }, 1000);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      clearInterval(interval);
+    };
   }, []);
 
   return (
@@ -86,6 +109,43 @@ const Header = () => {
               </motion.button>
             </Link>
 
+            {/* Auth Buttons / Profile Icon */}
+            {authenticated ? (
+              <Link href="/profile">
+                <motion.button
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                  className="relative hidden sm:flex items-center justify-center w-10 h-10 bg-primary-600 text-white rounded-full hover:bg-primary-700 transition-colors"
+                  title="Profile"
+                >
+                  <User className="h-5 w-5" />
+                </motion.button>
+              </Link>
+            ) : (
+              <>
+                <Link href="/signin">
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="hidden sm:flex items-center space-x-2 px-4 py-2 text-gray-700 hover:text-primary-600 transition-colors"
+                  >
+                    <User className="h-5 w-5" />
+                    <span className="hidden lg:block">Sign In</span>
+                  </motion.button>
+                </Link>
+
+                <Link href="/signup">
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="hidden sm:flex items-center space-x-2 px-4 py-2 border border-primary-600 text-primary-600 rounded-full hover:bg-primary-50 transition-colors"
+                  >
+                    <span className="hidden lg:block">Sign Up</span>
+                  </motion.button>
+                </Link>
+              </>
+            )}
+
             <Link href="/cart">
               <motion.button
                 whileHover={{ scale: 1.1 }}
@@ -149,6 +209,28 @@ const Header = () => {
                     <span>Favorites</span>
                   </button>
                 </Link>
+                {authenticated ? (
+                  <Link href="/profile">
+                    <button className="flex items-center space-x-2 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg w-full">
+                      <User className="h-5 w-5" />
+                      <span>Profile</span>
+                    </button>
+                  </Link>
+                ) : (
+                  <>
+                    <Link href="/signin">
+                      <button className="flex items-center space-x-2 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg w-full">
+                        <User className="h-5 w-5" />
+                        <span>Sign In</span>
+                      </button>
+                    </Link>
+                    <Link href="/signup">
+                      <button className="flex items-center space-x-2 px-4 py-2 text-primary-600 hover:bg-primary-50 rounded-lg w-full border border-primary-600">
+                        <span>Sign Up</span>
+                      </button>
+                    </Link>
+                  </>
+                )}
                 <Link href="/cart">
                   <button className="flex items-center space-x-2 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg w-full">
                     <ShoppingCart className="h-5 w-5" />
