@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useSelector, useDispatch } from 'react-redux';
 import { toggleFavorite } from '@/store/slices/favoritesSlice';
 import { selectIsFavorite } from '@/store/slices/favoritesSlice';
+import { addToCart } from '@/store/slices/cartSlice';
 
 const MenuItemCard = ({ item, index }) => {
   const router = useRouter();
@@ -19,6 +20,13 @@ const MenuItemCard = ({ item, index }) => {
   const handleFavoriteClick = (e) => {
     e.stopPropagation();
     dispatch(toggleFavorite(item.id));
+  };
+
+  const handleAddToCartClick = (e) => {
+    e.stopPropagation();
+    if (item.isAvailable) {
+      dispatch(addToCart({ item, quantity: 1 }));
+    }
   };
 
   return (
@@ -96,11 +104,13 @@ const MenuItemCard = ({ item, index }) => {
               <motion.button
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleCardClick();
-                }}
-                className="p-2 bg-primary-600 text-white rounded-full hover:bg-primary-700 transition-colors"
+                onClick={handleAddToCartClick}
+                disabled={!item.isAvailable}
+                className={`p-2 rounded-full transition-colors ${
+                  item.isAvailable
+                    ? 'bg-primary-600 text-white hover:bg-primary-700'
+                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                }`}
               >
                 <Plus className="h-5 w-5" />
               </motion.button>

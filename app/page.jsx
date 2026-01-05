@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import Header from '@/components/Header';
 import Hero from '@/components/Hero';
@@ -8,24 +8,42 @@ import ServiceGrid from '@/components/ServiceGrid';
 import Categories from '@/components/Categories';
 import Footer from '@/components/Footer';
 import { setMenuItems } from '@/store/slices/menuSlice';
-import { defaultMenuItems } from '@/store/slices/menuSlice';
-import { getMenuItems, initializeDefaultMenu, saveMenuItems } from '@/lib/storage';
+import { getMenu } from '@/lib/api';
 
 export default function Home() {
   const dispatch = useDispatch();
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      initializeDefaultMenu();
-      const items = getMenuItems();
-      if (items.length > 0) {
-        dispatch(setMenuItems(items));
-      } else {
-        // Initialize with default items
-        dispatch(setMenuItems(defaultMenuItems));
-        saveMenuItems(defaultMenuItems);
+    const fetchMenu = async () => {
+      try {
+        setLoading(true);
+        const meals = await getMenu();
+        
+        // Map backend meal structure to frontend menu item structure
+        const mappedMeals = meals.map((meal) => ({
+          id: meal.id.toString(),
+          name: meal.name,
+          image: meal.image_url || 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=400&h=300&fit=crop',
+          category: meal.meal_type ? meal.meal_type.charAt(0).toUpperCase() + meal.meal_type.slice(1) : 'Meal',
+          description: meal.description || '',
+          price: parseFloat(meal.price) || 0,
+          isAvailable: meal.is_available !== false, // Default to true if not specified
+          isVeg: true, // Assuming all meals are vegetarian for now
+          popular: false, // Can be added to backend later if needed
+        }));
+        
+        dispatch(setMenuItems(mappedMeals));
+      } catch (error) {
+        console.error('Failed to fetch menu:', error);
+        // On error, set empty array (or you could use defaultMenuItems as fallback)
+        dispatch(setMenuItems([]));
+      } finally {
+        setLoading(false);
       }
-    }
+    };
+
+    fetchMenu();
   }, [dispatch]);
 
   return (

@@ -40,7 +40,8 @@ export default function AdminPage() {
     description: '',
     meal_type: 'breakfast',
     price: '',
-    image_url: '',
+    image: null,
+    imagePreview: null,
   });
   
   // Orders
@@ -154,7 +155,8 @@ export default function AdminPage() {
         description: '',
         meal_type: 'breakfast',
         price: '',
-        image_url: '',
+        image: null,
+        imagePreview: null,
       });
       await loadMeals();
     } catch (err) {
@@ -169,9 +171,21 @@ export default function AdminPage() {
       description: meal.description || '',
       meal_type: meal.meal_type || 'breakfast',
       price: meal.price?.toString() || '',
-      image_url: meal.image_url || '',
+      image: null,
+      imagePreview: meal.image_url || null,
     });
     setShowMealForm(true);
+  };
+
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setMealFormData({
+        ...mealFormData,
+        image: file,
+        imagePreview: URL.createObjectURL(file),
+      });
+    }
   };
 
   const handleDeleteMeal = async (mealId) => {
@@ -476,7 +490,8 @@ export default function AdminPage() {
                           description: '',
                           meal_type: 'breakfast',
                           price: '',
-                          image_url: '',
+                          image: null,
+                          imagePreview: null,
                         });
                         setShowMealForm(true);
                       }}
@@ -558,21 +573,29 @@ export default function AdminPage() {
                             <option value="breakfast">Breakfast</option>
                             <option value="lunch">Lunch</option>
                             <option value="dinner">Dinner</option>
+                            <option value="premium">Premium</option>
+                            <option value="special">Special</option>
                           </select>
                         </div>
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Image URL
+                            Image
                           </label>
                           <input
-                            type="url"
-                            value={mealFormData.image_url}
-                            onChange={(e) =>
-                              setMealFormData({ ...mealFormData, image_url: e.target.value })
-                            }
+                            type="file"
+                            accept="image/*"
+                            onChange={handleImageChange}
                             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
-                            placeholder="https://example.com/image.jpg"
                           />
+                          {mealFormData.imagePreview && (
+                            <div className="mt-3">
+                              <img
+                                src={mealFormData.imagePreview}
+                                alt="Preview"
+                                className="w-full h-48 object-cover rounded-lg border border-gray-300"
+                              />
+                            </div>
+                          )}
                         </div>
                       </div>
                       <div className="flex space-x-4">
@@ -595,7 +618,8 @@ export default function AdminPage() {
                               description: '',
                               meal_type: 'breakfast',
                               price: '',
-                              image_url: '',
+                              image: null,
+                              imagePreview: null,
                             });
                           }}
                           whileHover={{ scale: 1.02 }}
