@@ -6,6 +6,9 @@ import Header from '@/components/Header';
 import Hero from '@/components/Hero';
 import ServiceGrid from '@/components/ServiceGrid';
 import Categories from '@/components/Categories';
+import SpecialThali from '@/components/SpecialThali';
+import TiffinService from '@/components/TiffinService';
+import AppComingSoon from '@/components/AppComingSoon';
 import Footer from '@/components/Footer';
 import { setMenuItems } from '@/store/slices/menuSlice';
 import { getMenu } from '@/lib/api';
@@ -51,7 +54,10 @@ export default function Home() {
       <Header />
       <Hero />
       <Categories />
+      <SpecialThali />
       <ServiceGrid />
+      <TiffinService />
+      <AppComingSoon />
       <Footer />
     </main>
   );

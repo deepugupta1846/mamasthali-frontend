@@ -10,7 +10,7 @@ import { toggleFavorite, selectIsFavorite } from '@/store/slices/favoritesSlice'
 import { addToCart } from '@/store/slices/cartSlice';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import MenuItemCard from '@/components/MenuItemCard';
+import MenuItemCardHorizontal from '@/components/MenuItemCardHorizontal';
 
 export default function MenuItemDetailPage() {
   const router = useRouter();
@@ -208,7 +208,7 @@ export default function MenuItemDetailPage() {
             <h2 className="text-2xl font-bold text-gray-900 mb-4">More from our menu</h2>
             <div className="space-y-4">
               {otherItems.map((item, index) => (
-                <MenuItemCard key={item.id} item={item} index={index} />
+                <MenuItemCardHorizontal key={item.id} item={item} index={index} />
               ))}
             </div>
           </div>

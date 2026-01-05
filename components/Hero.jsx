@@ -1,9 +1,32 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowRight, UtensilsCrossed, Clock, Star } from 'lucide-react';
+import { getMealsByCategory } from '@/lib/api';
+import { useRouter } from 'next/navigation';
 
 const Hero = () => {
+  const router = useRouter();
+  const [specialMeals, setSpecialMeals] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchSpecialMeals = async () => {
+      try {
+        setLoading(true);
+        const meals = await getMealsByCategory('special', 4);
+        setSpecialMeals(meals);
+      } catch (error) {
+        console.error('Failed to fetch special meals:', error);
+        setSpecialMeals([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSpecialMeals();
+  }, []);
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -133,7 +156,9 @@ const Hero = () => {
                 <div className="bg-white rounded-2xl p-6 space-y-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-3">
-                      <div className="w-16 h-16 bg-gradient-to-br from-primary-400 to-primary-600 rounded-full"></div>
+                      <div className="w-16 h-16 bg-gradient-to-br from-primary-500 to-primary-700 rounded-full flex items-center justify-center shadow-lg">
+                        <span className="text-2xl font-bold text-white">MT</span>
+                      </div>
                       <div>
                         <div className="font-bold text-gray-800">Mama's Special Thali</div>
                         <div className="text-sm text-gray-500">Home Kitchen</div>
@@ -145,17 +170,48 @@ const Hero = () => {
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-4">
-                    <div className="h-32 bg-gradient-to-br from-orange-200 to-orange-400 rounded-xl"></div>
-                    <div className="h-32 bg-gradient-to-br from-green-200 to-green-400 rounded-xl"></div>
-                    <div className="h-32 bg-gradient-to-br from-red-200 to-red-400 rounded-xl"></div>
-                    <div className="h-32 bg-gradient-to-br from-yellow-200 to-yellow-400 rounded-xl"></div>
+                    {loading ? (
+                      // Loading state - show placeholders
+                      <>
+                        <div className="h-32 bg-gray-200 rounded-xl animate-pulse"></div>
+                        <div className="h-32 bg-gray-200 rounded-xl animate-pulse"></div>
+                        <div className="h-32 bg-gray-200 rounded-xl animate-pulse"></div>
+                        <div className="h-32 bg-gray-200 rounded-xl animate-pulse"></div>
+                      </>
+                    ) : specialMeals.length > 0 ? (
+                      // Show actual meal images
+                      specialMeals.slice(0, 4).map((meal, index) => (
+                        <motion.div
+                          key={meal.id}
+                          whileHover={{ scale: 1.05 }}
+                          onClick={() => router.push(`/menu/${meal.id}`)}
+                          className="h-32 rounded-xl overflow-hidden cursor-pointer relative"
+                        >
+                          <img
+                            src={meal.image_url || 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=400&h=300&fit=crop'}
+                            alt={meal.name || 'Special Thali'}
+                            className="w-full h-full object-cover"
+                          />
+                        </motion.div>
+                      ))
+                    ) : (
+                      // Fallback if no meals found
+                      <>
+                        <div className="h-32 bg-gradient-to-br from-orange-200 to-orange-400 rounded-xl"></div>
+                        <div className="h-32 bg-gradient-to-br from-green-200 to-green-400 rounded-xl"></div>
+                        <div className="h-32 bg-gradient-to-br from-red-200 to-red-400 rounded-xl"></div>
+                        <div className="h-32 bg-gradient-to-br from-yellow-200 to-yellow-400 rounded-xl"></div>
+                      </>
+                    )}
                   </div>
                   <div className="flex items-center justify-between pt-4 border-t border-gray-200">
                     <div className="flex items-center space-x-2 text-gray-600">
                       <Clock className="h-4 w-4" />
                       <span className="text-sm">30 min</span>
                     </div>
-                    <div className="text-xl font-bold text-primary-600">₹150</div>
+                    <div className="text-xl font-bold text-primary-600">
+                      {specialMeals.length > 0 ? `₹${specialMeals[0].price}` : '₹150'}
+                    </div>
                   </div>
                 </div>
               </div>

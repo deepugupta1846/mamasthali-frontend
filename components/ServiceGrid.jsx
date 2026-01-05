@@ -1,31 +1,49 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { Filter } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ArrowRight } from 'lucide-react';
 import { useSelector } from 'react-redux';
+import { useRouter } from 'next/navigation';
 import { selectMenuItems } from '@/store/slices/menuSlice';
 import MenuItemCard from './MenuItemCard';
 
 const ServiceGrid = () => {
+  const router = useRouter();
   const menuItems = useSelector(selectMenuItems);
-  const [filter, setFilter] = useState('all');
-  const [filteredItems, setFilteredItems] = useState([]);
+  const scrollContainerRef = useRef(null);
+  const [showLeftArrow, setShowLeftArrow] = useState(false);
+  const [showRightArrow, setShowRightArrow] = useState(true);
+
+  const availableItems = menuItems.filter(item => item.isAvailable);
+  const displayItems = availableItems.slice(0, 8); // Show first 8 items in slider
+
+  const checkScroll = () => {
+    if (scrollContainerRef.current) {
+      const { scrollLeft, scrollWidth, clientWidth } = scrollContainerRef.current;
+      setShowLeftArrow(scrollLeft > 0);
+      setShowRightArrow(scrollLeft < scrollWidth - clientWidth - 10);
+    }
+  };
 
   useEffect(() => {
-    if (filter === 'all') {
-      setFilteredItems(menuItems.filter(item => item.isAvailable));
-    } else if (filter === 'popular') {
-      setFilteredItems(menuItems.filter(item => item.isAvailable && item.popular));
-    } else if (filter === 'veg') {
-      setFilteredItems(menuItems.filter(item => item.isAvailable && item.isVeg));
-    } else {
-      setFilteredItems(menuItems.filter(item => item.isAvailable && item.category === filter));
+    checkScroll();
+    const container = scrollContainerRef.current;
+    if (container) {
+      container.addEventListener('scroll', checkScroll);
+      return () => container.removeEventListener('scroll', checkScroll);
     }
-  }, [filter, menuItems]);
+  }, [availableItems]);
 
-  const categories = ['all', ...new Set(menuItems.map(item => item.category))];
-  const hasPopular = menuItems.some(item => item.popular);
+  const scroll = (direction) => {
+    if (scrollContainerRef.current) {
+      const scrollAmount = 320; // Width of card + gap
+      scrollContainerRef.current.scrollBy({
+        left: direction === 'left' ? -scrollAmount : scrollAmount,
+        behavior: 'smooth',
+      });
+    }
+  };
 
   return (
     <section className="py-12 bg-gray-50">
@@ -43,47 +61,72 @@ const ServiceGrid = () => {
               Our Menu
             </h2>
             <p className="text-gray-600">
-              {filteredItems.length} items available • Mansarover, Jaipur
+              {availableItems.length} items available • Mansarover, Jaipur
             </p>
           </div>
 
-          {/* Filters */}
-          <div className="flex items-center space-x-4 mt-4 md:mt-0">
-            <div className="flex items-center space-x-2 bg-white rounded-full px-4 py-2 shadow-md">
-              <Filter className="h-5 w-5 text-gray-600" />
-              <select
-                value={filter}
-                onChange={(e) => setFilter(e.target.value)}
-                className="outline-none text-gray-700 font-medium cursor-pointer"
-              >
-                <option value="all">All Items</option>
-                {hasPopular && <option value="popular">Popular</option>}
-                <option value="veg">Veg Only</option>
-                {categories.filter(cat => cat !== 'all').map((category) => (
-                  <option key={category} value={category}>
-                    {category}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
+          {/* See More Button */}
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => router.push('/menus')}
+            className="flex items-center space-x-2 px-6 py-3 bg-primary-600 text-white rounded-full font-semibold hover:bg-primary-700 transition-colors shadow-lg mt-4 md:mt-0"
+          >
+            <span>See More</span>
+            <ArrowRight className="h-5 w-5" />
+          </motion.button>
         </motion.div>
 
-        {/* Menu Items Grid */}
-        {filteredItems.length === 0 ? (
+        {/* Menu Items Slider */}
+        {displayItems.length === 0 ? (
           <div className="text-center py-20">
-            <p className="text-gray-500 text-lg mb-4">No items available in this category.</p>
+            <p className="text-gray-500 text-lg mb-4">No items available.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {filteredItems.map((item, index) => (
-              <div key={item.id} className="h-full">
-                <MenuItemCard item={item} index={index} />
-              </div>
-            ))}
+          <div className="relative">
+            {/* Left Arrow */}
+            {showLeftArrow && (
+              <button
+                onClick={() => scroll('left')}
+                className="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white rounded-full p-3 shadow-lg hover:bg-gray-50 transition-colors"
+                aria-label="Scroll left"
+              >
+                <ChevronLeft className="h-6 w-6 text-gray-700" />
+              </button>
+            )}
+
+            {/* Scrollable Container */}
+            <div
+              ref={scrollContainerRef}
+              className="flex gap-6 overflow-x-auto scrollbar-hide pb-4 scroll-smooth"
+              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+            >
+              {displayItems.map((item, index) => (
+                <div key={item.id} className="flex-shrink-0 w-80">
+                  <MenuItemCard item={item} index={index} />
+                </div>
+              ))}
+            </div>
+
+            {/* Right Arrow */}
+            {showRightArrow && (
+              <button
+                onClick={() => scroll('right')}
+                className="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white rounded-full p-3 shadow-lg hover:bg-gray-50 transition-colors"
+                aria-label="Scroll right"
+              >
+                <ChevronRight className="h-6 w-6 text-gray-700" />
+              </button>
+            )}
           </div>
         )}
       </div>
+
+      <style jsx>{`
+        .scrollbar-hide::-webkit-scrollbar {
+          display: none;
+        }
+      `}</style>
     </section>
   );
 };
