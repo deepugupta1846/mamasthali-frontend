@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { User, Phone, Mail, MapPin, Building, Package, Edit2, Save, X, LogOut } from 'lucide-react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import GoogleMapAddressPicker from '@/components/GoogleMapAddressPicker';
 import { getProfile, updateProfile, getMyOrders, logout, isAuthenticated } from '@/lib/api';
 
 export default function ProfilePage() {
@@ -23,6 +24,7 @@ export default function ProfilePage() {
     city: '',
     pincode: '',
   });
+  const [selectedPlace, setSelectedPlace] = useState(null);
 
   useEffect(() => {
     // Check if user is authenticated
@@ -224,24 +226,30 @@ export default function ProfilePage() {
                     </div>
 
                     {/* Address */}
-                    <div>
-                      <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-2">
-                        Address
-                      </label>
-                      <div className="relative">
-                        <div className="absolute inset-y-0 left-0 pl-4 pt-4 pointer-events-none">
-                          <MapPin className="h-5 w-5 text-gray-400" />
-                        </div>
-                        <textarea
-                          id="address"
-                          name="address"
-                          value={formData.address}
-                          onChange={handleChange}
-                          rows={3}
-                          className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
-                        />
-                      </div>
-                    </div>
+                    <GoogleMapAddressPicker
+                      value={formData.address}
+                      onChange={handleChange}
+                      placeholder="Start typing your address to search..."
+                      label="Address"
+                      onPlaceSelect={(place) => {
+                        setSelectedPlace(place);
+                        // Extract city and pincode from address components
+                        if (place.address_components) {
+                          let city = '';
+                          let pincode = '';
+                          place.address_components.forEach((component) => {
+                            if (component.types.includes('locality') || component.types.includes('administrative_area_level_2')) {
+                              city = component.long_name;
+                            }
+                            if (component.types.includes('postal_code')) {
+                              pincode = component.long_name;
+                            }
+                          });
+                          if (city) setFormData((prev) => ({ ...prev, city }));
+                          if (pincode) setFormData((prev) => ({ ...prev, pincode }));
+                        }
+                      }}
+                    />
 
                     {/* City */}
                     <div>
